@@ -1,0 +1,25 @@
+smartproxy:
+  tls: {}
+
+api:
+  count: 1
+
+content:
+  count: 1
+
+worker:
+  count: 1
+
+psql:
+  install: false
+
+logging:
+  level: INFO
+
+cache:
+  enabled: false
+
+persistence:
+  size: 50Gi
+  accessModes:
+  - ReadWriteMany

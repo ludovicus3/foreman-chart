@@ -1,0 +1,9 @@
+schemaVersion: 2.1.0
+metadata:
+  name: foreman-helm-chart
+components:
+  - name: tools
+    container:
+      image: quay.io/ludovicus/helm-developer-image:ubi8-latest
+      memoryLimit: 2G
+      mountSources: true

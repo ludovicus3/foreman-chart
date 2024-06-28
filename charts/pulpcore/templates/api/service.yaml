@@ -1,0 +1,17 @@
+{{ $context := dict "component" "api" "context" . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "fullname" $context }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "labels" $context | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: {{ default 80 .Values.externalHttpPort }}
+    targetPort: {{ default 24817 .Values.internalHttpPort }}
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "labels.selectors" $context | nindent 4 }}

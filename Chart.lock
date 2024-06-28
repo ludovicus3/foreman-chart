@@ -1,0 +1,9 @@
+dependencies:
+- name: pulpcore
+  repository: ""
+  version: '*.*.*'
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 16.13.2
+digest: sha256:a287641f9e636f95166e54c17ba7f6eb5b3c15d0ffe1b9a138e0262e1f9db4ce
+generated: "2024-06-25T20:16:21.64391676Z"

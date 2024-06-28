@@ -1,0 +1,21 @@
+{{- $context := dict "component" "proxy" "context" . -}}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "fullname" $context }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "labels" $context | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: {{ default 443 .Values.externalHttpsPort }}
+    targetPort: {{ default 8443 .Values.internalHttpsPort }}
+    protocol: TCP
+    name: https
+  - port: {{ default 80 .Values.externalHttpPort }}
+    targetPort: {{ default 8080 .Values.internalHttpPort }}
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "labels.selectors" $context | nindent 4 }}

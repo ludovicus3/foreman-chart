@@ -1,0 +1,59 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "fullname" .  }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+data:
+  settings.py: |
+    CONTENT_ORIGIN = "https://{{ include "pulpcore.ingressHost" . }}"
+
+    SECRET_KEY = os.getenv("SECRET_KEY")
+
+    DATABASES = {
+      'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': '{{ include "pulpcore.psql.database" . }}',
+        'USER': '{{ include "pulpcore.psql.username" . }}',
+        'PASSWORD': os.getenv("POSTGRESQL_PASSWORD"),
+        'HOST': '{{ include "pulpcore.psql.host" . }}',
+        'PORT': '{{ include "pulpcore.psql.port" . }}',
+      },
+    }
+
+    REDIS_HOST = '{{ include "foreman.redis.url" . }}'
+
+    REMOTE_USER_ENVIRON_NAME = 'HTTP_REMOTE_USER'
+    AUTHENTICATION_BACKENDS = ['pulpcore.app.authentication.PulpNoCreateRemoteUserBackend']
+
+    REST_FRAMEWORK__DEFAULT_AUTHENTICATION_CLASSES = (
+      'rest_framework.authentication.SessionAuthentication',
+      'pulpcore.app.authentication.PulpRemoteUserAuthentication'
+    )
+
+    ALLOWED_IMPORT_PATHS = ["/var/lib/pulp/sync_imports", "/var/lib/pulp/imports"]
+    ALLOWED_EXPORT_PATHS = ["/var/lib/pulp/exports"]
+
+    # Derive HTTP/HTTPS via the X-Forwarded-Proto header set by proxy
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+    CACHE_ENABLED = {{ ternary "True" "False" .Values.cache.enabled }}
+    {{- if and .Values.cache.enabled .Values.cache.expiresTtl -}}
+    CACHE_SETTINGS = {
+      'EXPIRES_TTL': {{ .Values.cache.expiresTtl }}
+    }
+    {{- end -}}
+
+    TOKEN_AUTH_DISABLED = False
+    TOKEN_AUTH_SIGNATURE_ALGORITHM = "ES256"
+
+    LOGGING = {
+      "dynaconf_merge": True,
+      "loggers": {
+        '': {
+          'handlers': ['console'],
+          'level': '{{ .Values.logging.level }}',
+        }
+      }
+    }

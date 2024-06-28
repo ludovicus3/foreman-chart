@@ -1,0 +1,17 @@
+{{- $context := dict "component" "smartproxy" "context" . -}}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "fullname" $context }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "labels" $context | nindent 4 }}
+data:
+  pulpcore.yml: |
+    ---
+    :enabled: https
+    :pulp_url: https://{{ include "pulpcore.proxy.serviceHost" . }}
+    :content_app_url: https://{{ include "pulpcore.ingressHost" . }}/pulp/content
+    :mirror: false
+    :client_authentication: ["client_certificate"]
+    :rhsm_url: https://{{ include "foreman.ingressHost" . }}/rhsm

@@ -1,0 +1,38 @@
+{{- $context := dict "component" "proxy" "context" . -}}
+{{- $imageConfig := "" -}}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ template "fullname" $context }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "labels" $context | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "labels" $context | nindent 6 }}
+      app.kubernetes.io/component: proxy
+  template:
+    metadata:
+      {{- include "labels" $context | nindent 6 }}
+    spec:
+      containers:
+        - name: proxy
+          image: {{ $imageConfig }}
+          ports:
+            - containerPort: {{ .Values.internalHttpPort }}
+              protocol: TCP
+            - containerPort: {{ .Values.internalHttpsPort }}
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/conf.d
+            - name: tls
+              mountPath: /etc/pki/pulpcore
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "fullname" $context }}
+        - name: tls
+          secret:
+            secretName: {{ include "certs.tlsSecretName" . }}

@@ -1,0 +1,44 @@
+{{- $context := dict "component" "content" "context" . -}}
+kind: Deployment
+contentVersion: v2
+metadata:
+  name: {{ template "fullname" $context }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.content.count }}
+  selector:
+    matchLabels:
+      {{- include "labels.selectors" $context | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "labels" $context | nindent 8 }}
+    spec:
+      containers:
+      - name: pulp-content
+        image: 'pulp/pulp-minimal:stable'
+        command:
+        - pulp-content
+        ports:
+        - containerPort: 24816
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /etc/pulp/settings.py
+          subPath: settings.py
+        - name: key
+          mountPath: /etc/pulp/certs
+        - name: data
+          mountPath: /var/lib/pulp
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "fullname" . }}
+        - name: key
+          secret:
+            secretName: {{ template "fullname" . }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ template "fullname" . }}

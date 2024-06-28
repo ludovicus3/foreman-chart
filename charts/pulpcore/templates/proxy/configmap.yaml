@@ -1,0 +1,37 @@
+{{- $context := dict "component" "proxy" "context" . -}}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "fullname" $context }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "labels" $context | nindent 4 }}
+data:
+  pulpcore.conf: |
+    server {
+      listen {{ default 8080 .Values.internalHttpPort }};
+
+      location /pulp/content {
+        proxy_set_header X-CLIENT-CERT $ssl_client_escaped_cert;
+        proxy_pass http://{{ include "pulpcore.content.serviceHost" . }}/pulp/content;
+      }
+    }
+  pulpcore-ssl.conf: |
+    map  $ssl_client_s_dn  $ssl_client_s_dn_cn {
+      default "";
+      ~/CN=(?<CN>[^/]+) $CN;
+    }
+
+    server {
+      listen {{ default 8443 .Values.internalHttpsPort }} ssl;
+
+      location /pulp/content {
+        proxy_set_header X-CLIENT-CERT $ssl_client_escaped_cert;
+        proxy_pass http://{{ include "pulpcore.content.serviceHost" . }}/pulp/content;
+      }
+
+      location /pulp/api/v3 {
+        proxy_set_header REMOTE_USER $ssl_client_s_dn_cn;
+        proxy_pass http://{{ include "pulpcore.api.serviceHost" . }}/pulp/api/v3;
+      }
+    }

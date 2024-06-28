@@ -1,0 +1,101 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ template "fullname" . }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "labels" . | nindent 4 }}
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      {{- include "labels.selectors" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "labels" . | nindent 8 }}
+    spec:
+      volumes:
+        - name: passwords
+          secret:
+            secretName: candlepin
+        - name: certs
+          emptyDir: {}
+        - name: foreman-tls
+          secret:
+            secretName: foreman-tls
+            defaultMode: 420
+        - name: candlepin-tls
+          secret:
+            secretName: candlepin-tls
+            defaultMode: 420
+        - name: foreman-ca
+          secret:
+            secretName: foreman-ca
+            defaultMode: 420
+        - name: config
+          configMap:
+            name: candlepin-config
+            defaultMode: 420
+        - name: tomcat
+          configMap:
+            name: candlepin-tomcat
+            defaultMode: 420
+      initContainers:
+        - name: certs
+          image: 'image-registry.openshift-image-registry.svc:5000/foreman/candlepin@sha256:0f0976f8809564862178e735b7700e87678e3a17d6117069836023a88e0bdb79'
+          command:
+            - /usr/local/bin/build_certs
+          resources: {}
+          volumeMounts:
+            - name: certs
+              mountPath: /etc/candlepin/certs
+            - name: passwords
+              mountPath: /var/run/secrets/passwords
+            - name: foreman-tls
+              mountPath: /var/run/secrets/foreman
+            - name: candlepin-tls
+              mountPath: /var/run/secrets/tomcat
+            - name: foreman-ca
+              mountPath: /var/run/secrets/ca
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+      containers:
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: candlepin
+          command:
+            - /usr/libexec/tomcat/server
+            - start
+          ports:
+            - containerPort: 8443
+              protocol: TCP
+            - containerPort: 61613
+              protocol: TCP
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: config
+              mountPath: /etc/candlepin
+            - name: certs
+              mountPath: /etc/candlepin/certs
+            - name: tomcat
+              mountPath: /etc/tomcat/server.xml
+              subPath: server.xml
+            - name: tomcat
+              mountPath: /etc/tomcat/cert-users.properties
+              subPath: cert-users.properties
+          terminationMessagePolicy: File
+          image: 'image-registry.openshift-image-registry.svc:5000/foreman/candlepin@sha256:0f0976f8809564862178e735b7700e87678e3a17d6117069836023a88e0bdb79'
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600

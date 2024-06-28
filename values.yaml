@@ -3,6 +3,37 @@
 # Declare variables to be passed into your templates.
 
 global:
+  application:
+    create: false
+
+  deployment:
+    labels: {}
+    annotations: {}
+
+  service:
+    labels: {}
+    annotations: {}
+
+  pod:
+    labels: {}
+    annotations: {}
+    affinities: {}
+    antiAffinities: {}
+
+  common:
+    labels: {}
+
+  ingress:
+    enabled: true
+    domain: example.com
+    foreman: {}
+    pulpcore: {}
+
+  smartproxy:
+    image: "testing"
+    #serviceHttpsPort:
+    #containerHttpsPort:
+
   redis:
     auth:
       enabled: true
@@ -21,7 +52,7 @@ global:
 
 ## Configuration of Redis
 redis:
-  install: true
+  install: false
   auth:
     existingSecret: foreman-redis-secret
     existingSecretKey: redis-password

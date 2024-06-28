@@ -1,0 +1,28 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "smartproxy.configMapName" . }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    test: {{ .Subcharts.pulpcore.Chart.Name }}
+    {{- include "labels" . | nindent 4 }}
+data:
+  settings.yml: |
+    :settings_directory: /etc/foreman-proxy/settings.d
+
+    :foreman_url: https://{{ include "foreman.serviceHost" . }}
+
+    :bind_host: '*'
+
+    :ssl_ca_file: /etc/foreman-proxy/tls/ca.crt
+    :ssl_certificate: /etc/foreman-proxy/tls/tls.crt
+    :ssl_private_key: /etc/foreman-proxy/tls/tls.key
+
+    :foreman_ssl_ca: /etc/foreman-proxy/tls/ca.crt
+    :foreman_ssl_cert: /etc/foreman-proxy/tls/tls.crt
+    :foreman_ssl_key: /etc/foreman-proxy/tls/tls.key
+
+    :https_port: 8443
+
+    :log_file: STDOUT
+    :log_level: WARNING
